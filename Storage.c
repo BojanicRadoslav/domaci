@@ -22,7 +22,7 @@ int storage[10];
 int pos = 0;
 int endRead = 0;
 
-int rega, regb, regc, regd, res;
+int rega, regb, regc, regd, result;
 
 int storage_open(struct inode *pinode, struct file *pfile);
 int storage_close(struct inode *pinode, struct file *pfile);
@@ -115,8 +115,74 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 		}
 	}
 	else
-	{
-		printk(KERN_WARNING "Wrong command format\nexpected: n,m\n\tn-position\n\tm-value\n");
+	{	char reg1, reg2, op, val1, val2;
+		ret = sscanf(buff, "reg%c %c reg%c", &reg1, &op, &reg2);
+		if(ret == 3){
+			printk(KERN_INFO "reg%c i reg%c sa operacijom %c\n", reg1, reg2, op);
+			switch(reg1){
+				case 'a':
+					val1 = rega;
+					break;
+				case 'b':
+					val1 = regb;
+					break;
+				case 'c':
+					val1 = regc;
+					break;
+				case 'd':
+					val1 = regd;
+					break;
+				default:
+					printk(KERN_WARNING "Reg moze da bude a,b,c ili d\n");
+					return -1;
+			};
+
+			switch(reg2){
+				case 'a':
+					val2 = rega;
+					break;
+				case 'b':
+					val2 = regb;
+					break;
+				case 'c':
+					val2 = regc;
+					break;
+				case 'd':
+					val2 = regd;
+					break;
+				default:
+					printk(KERN_WARNING "Reg moze da bude a,b,c ili d\n");
+					return -1;
+			};
+
+			switch(op){
+				case '+':
+					result = val1+val2;
+					break;
+				case '-':
+					result = val1-val2;
+					break;
+				case '*':
+					result = val1*val2;
+					break;
+				case '/':
+					if(val2 != 0){
+					result = val1/val2;
+					}else{
+						printk(KERN_WARNING "Deljenje sa nulom nije dozvoljeno\n");
+					}
+					break;
+				default:
+					printk(KERN_WARNING "Dozvoljene operacije su +, -, * i /\n");
+					return -1;
+			};
+
+			printk(KERN_INFO "rezultat je %d", result);
+			return result;
+			
+		}else{
+		printk(KERN_WARNING "Pogresan format komande\nTreba da bude regx=broj ili regx ? regy\n");
+		}
 	}
 
 	return length;
