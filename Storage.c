@@ -22,6 +22,8 @@ int storage[10];
 int pos = 0;
 int endRead = 0;
 
+int rega, regb, regc, regd, res;
+
 int storage_open(struct inode *pinode, struct file *pfile);
 int storage_close(struct inode *pinode, struct file *pfile);
 ssize_t storage_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset);
@@ -76,24 +78,40 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 	char buff[BUFF_SIZE];
 	int position, value;
 	int ret;
+	char reg;
 
 	ret = copy_from_user(buff, buffer, length);
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
 
-	ret = sscanf(buff,"%d,%d",&value,&position);
+	ret = sscanf(buff,"reg%c=%x",&reg,&value);
 
 	if(ret==2)//two parameters parsed in sscanf
 	{
-		if(position >=0 && position <=9)
-		{
-			storage[position] = value; 
-			printk(KERN_INFO "Succesfully wrote value %d in position %d\n", value, position); 
-		}
-		else
-		{
-			printk(KERN_WARNING "Position should be between 0 and 9\n"); 
+		if(value < 0 || value >255){
+			printk(KERN_WARNING "Broj treba da bude izmedju 0x00 i 0xff\n");
+			return -1;
+		}else{
+			switch(reg){
+				case 'a':
+					rega=value;
+					break;
+				case 'b':
+					regb=value;
+					break;
+				case 'c':
+					regc=value;
+					break;
+				case 'd':
+					regd=value;
+					break;
+				default:
+					printk(KERN_WARNING "Registar moze da bude a, b, c ili d\n");
+					return -1;
+
+			};
+			printk(KERN_INFO "reg%c -> 0x%x", value);
 		}
 	}
 	else
