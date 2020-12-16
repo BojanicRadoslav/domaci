@@ -17,12 +17,13 @@ dev_t my_dev_id;
 static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
-
-int storage[10];
+enum formati{bin, dec, hex};
+enum formati format;
 int pos = 0;
 int endRead = 0;
 
 int rega, regb, regc, regd, result, carriage;
+int result_bin[8]= {0,0,0,0,0,0,0,0};
 
 int storage_open(struct inode *pinode, struct file *pfile);
 int storage_close(struct inode *pinode, struct file *pfile);
@@ -62,11 +63,22 @@ ssize_t storage_read(struct file *pfile, char __user *buffer, size_t length, lof
 		printk(KERN_INFO "Succesfully read from file\n");
 		return 0;
 	}
-	len = scnprintf(buff,BUFF_SIZE, "0x%x %d ", result, carriage);
+	if(format == hex) len = scnprintf(buff,BUFF_SIZE, "0x%x %d ", result, carriage);
+	else if(format == dec) len = scnprintf(buff, BUFF_SIZE, "%d %d", result, carriage);
+	else if(format == bin) len = scnprintf(buff, BUFF_SIZE, "%d", result_bin[7-pos]);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
-	endRead = 1;
+	if(format == bin){
+		pos++;
+		if(pos==8){
+			len = scnprintf(buff, BUFF_SIZE, " %d", carriage);
+			ret = copy_to_user(buffer, buff, len);
+			if(ret) return -EFAULT;
+			endRead = 1;
+
+		}
+	}else endRead = 1;
 	return len;
 }
 
@@ -114,7 +126,6 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 	else
 	{	char reg1, reg2, op;
 		int val1, val2;
-		result = 0;
 		ret = sscanf(buff, "reg%c %c reg%c", &reg1, &op, &reg2);
 		if(ret == 3){
 			printk(KERN_INFO "reg%c i reg%c sa operacijom %c\n", reg1, reg2, op);
@@ -181,12 +192,31 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 			if(result > 255) result -=255;
 			else if(result < 0) result +=255;
 			else carriage = 0;
-
+			int temp;
+			temp = result;
+			int i = 0;
+			for(i=0;i<8;i++){
+				result_bin[i]=temp%2;
+				temp/=2;
+				printk(KERN_INFO "%d", result_bin[i]);
+			}
 			printk(KERN_INFO "rezultat je 0x%x, prenos je %d", result, carriage);
 			
 		}else{
-		printk(KERN_WARNING "Pogresan format komande\nTreba da bude regx=broj ili regx ? regy\n");
-		return -1;
+			char format0,format1,format2;
+			ret = sscanf(buff, "format=%c%c%c", &format0, &format1, &format2);
+			if(ret == 3){
+				if(format0 == 'd' && format1 == 'e' && format2 == 'c') format = dec;
+				else if(format0 == 'b' && format1 == 'i' && format2 == 'n') format = bin;
+				else if(format0 == 'h' && format1 == 'e' && format2 == 'x') format = hex;
+				else{
+					printk(KERN_WARNING "Pogresan format\nDozvoljeni formati su bin, hex i dec\n");
+					return -1;
+				}
+			}else{
+				printk(KERN_WARNING "Pogresan format komande\nTreba da bude regx=broj ili regx ? regy\n");
+				return -1;
+			}
 		}
 	}
 
@@ -196,17 +226,14 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 static int __init storage_init(void)
 {
    int ret = 0;
-	int i=0;
 
-	//Initialize array
-	for (i=0; i<10; i++)
-		storage[i] = 0;
 	rega = 0;
 	regb = 0;
 	regc = 0;
 	regd = 0;
 	result = 0;
 	carriage = 0;
+	format = hex;
 
    ret = alloc_chrdev_region(&my_dev_id, 0, 1, "storage");
    if (ret){
