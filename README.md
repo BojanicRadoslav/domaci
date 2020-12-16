@@ -1,1 +1,1 @@
-Radi unos u registar, mozda radi prosledjivanje alu operacije
+Rade alu operacije i unos u regisre

@@ -22,7 +22,7 @@ int storage[10];
 int pos = 0;
 int endRead = 0;
 
-int rega, regb, regc, regd, result;
+int rega, regb, regc, regd, result, carriage;
 
 int storage_open(struct inode *pinode, struct file *pfile);
 int storage_close(struct inode *pinode, struct file *pfile);
@@ -115,7 +115,9 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 		}
 	}
 	else
-	{	char reg1, reg2, op, val1, val2;
+	{	char reg1, reg2, op;
+		int val1, val2;
+		result = 0;
 		ret = sscanf(buff, "reg%c %c reg%c", &reg1, &op, &reg2);
 		if(ret == 3){
 			printk(KERN_INFO "reg%c i reg%c sa operacijom %c\n", reg1, reg2, op);
@@ -162,7 +164,7 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 				case '-':
 					result = val1-val2;
 					break;
-				case '*':
+				case 'x':
 					result = val1*val2;
 					break;
 				case '/':
@@ -174,11 +176,16 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 					}
 					break;
 				default:
-					printk(KERN_WARNING "Dozvoljene operacije su +, -, * i /\n");
+					printk(KERN_WARNING "Dozvoljene operacije su +, -, x i /\n");
 					return -1;
 			};
 
-			printk(KERN_INFO "rezultat je %d", result);
+			carriage = 1;
+			if(result > 255) result -=255;
+			else if(result < 0) result +=255;
+			else carriage = 0;
+
+			printk(KERN_INFO "rezultat je 0x%x, prenos je %d", result, carriage);
 			
 		}else{
 		printk(KERN_WARNING "Pogresan format komande\nTreba da bude regx=broj ili regx ? regy\n");
@@ -197,6 +204,12 @@ static int __init storage_init(void)
 	//Initialize array
 	for (i=0; i<10; i++)
 		storage[i] = 0;
+	rega = 0;
+	regb = 0;
+	regc = 0;
+	regd = 0;
+	result = 0;
+	carriage = 0;
 
    ret = alloc_chrdev_region(&my_dev_id, 0, 1, "storage");
    if (ret){
