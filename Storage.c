@@ -170,6 +170,7 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 					result = val1/val2;
 					}else{
 						printk(KERN_WARNING "Deljenje sa nulom nije dozvoljeno\n");
+						return -1;
 					}
 					break;
 				default:
@@ -178,10 +179,10 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 			};
 
 			printk(KERN_INFO "rezultat je %d", result);
-			return result;
 			
 		}else{
 		printk(KERN_WARNING "Pogresan format komande\nTreba da bude regx=broj ili regx ? regy\n");
+		return -1;
 		}
 	}
 
