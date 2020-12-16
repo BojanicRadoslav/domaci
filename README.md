@@ -1,1 +1,1 @@
-Drajver radi stabilno za sada
+Drajver, nema blokiranje procesa, sve ostalo radi
