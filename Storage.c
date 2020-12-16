@@ -76,7 +76,7 @@ ssize_t storage_read(struct file *pfile, char __user *buffer, size_t length, lof
 ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset) 
 {
 	char buff[BUFF_SIZE];
-	int position, value;
+	int value;
 	int ret;
 	char reg;
 
@@ -111,7 +111,7 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 					return -1;
 
 			};
-			printk(KERN_INFO "reg%c -> 0x%x", value);
+			printk(KERN_INFO "reg%c -> 0x%x",reg ,value);
 		}
 	}
 	else
