@@ -21,7 +21,7 @@ enum formati{bin, dec, hex};
 enum formati format;
 int pos = 0;
 int endRead = 0;
-
+int allow_input = 1;
 int rega, regb, regc, regd, result, carriage;
 int result_bin[8]= {0,0,0,0,0,0,0,0};
 
@@ -57,6 +57,7 @@ ssize_t storage_read(struct file *pfile, char __user *buffer, size_t length, lof
 	int ret;
 	char buff[BUFF_SIZE];
 	long int len;
+	allow_input = 1;
 	if (endRead){
 		endRead = 0;
 		pos = 0;
@@ -88,7 +89,6 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 	int value;
 	int ret;
 	char reg;
-
 	ret = copy_from_user(buff, buffer, length);
 	if(ret)
 		return -EFAULT;
@@ -98,6 +98,10 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 
 	if(ret==2)//two parameters parsed in sscanf
 	{
+		if(allow_input == 0){
+			printk(KERN_WARNING "Operacija blokirana\nPrvo iscitaj rezultat\n");
+			return -1;
+		}
 		if(value < 0 || value >255){
 			printk(KERN_WARNING "Broj treba da bude izmedju 0x00 i 0xff\n");
 			return -1;
@@ -128,6 +132,10 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 		int val1, val2;
 		ret = sscanf(buff, "reg%c %c reg%c", &reg1, &op, &reg2);
 		if(ret == 3){
+			if(allow_input == 0){
+				printk(KERN_WARNING "Operacija blokirana\nPrvo isciraj rezultat\n");
+				return -1;
+			}
 			printk(KERN_INFO "reg%c i reg%c sa operacijom %c\n", reg1, reg2, op);
 			switch(reg1){
 				case 'a':
@@ -200,7 +208,8 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 				temp/=2;
 				printk(KERN_INFO "%d", result_bin[i]);
 			}
-			printk(KERN_INFO "rezultat je 0x%x, prenos je %d", result, carriage);
+			allow_input = 0;
+			//printk(KERN_INFO "rezultat je 0x%x, prenos je %d", result, carriage);
 			
 		}else{
 			char format0,format1,format2;
