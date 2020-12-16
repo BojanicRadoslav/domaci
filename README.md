@@ -1,1 +1,1 @@
-Rade alu operacije i unos u regisre
+Drajver radi stabilno za sada

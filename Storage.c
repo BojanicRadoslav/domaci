@@ -62,14 +62,11 @@ ssize_t storage_read(struct file *pfile, char __user *buffer, size_t length, lof
 		printk(KERN_INFO "Succesfully read from file\n");
 		return 0;
 	}
-	len = scnprintf(buff,BUFF_SIZE , "%d ", storage[pos]);
+	len = scnprintf(buff,BUFF_SIZE, "0x%x %d ", result, carriage);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
-	pos ++;
-	if (pos == 10) {
-		endRead = 1;
-	}
+	endRead = 1;
 	return len;
 }
 
