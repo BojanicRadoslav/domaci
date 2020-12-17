@@ -98,10 +98,6 @@ ssize_t storage_write(struct file *pfile, const char __user *buffer, size_t leng
 
 	if(ret==2)//two parameters parsed in sscanf
 	{
-		if(allow_input == 0){
-			printk(KERN_WARNING "Operacija blokirana\nPrvo iscitaj rezultat\n");
-			return -1;
-		}
 		if(value < 0 || value >255){
 			printk(KERN_WARNING "Broj treba da bude izmedju 0x00 i 0xff\n");
 			return -1;
